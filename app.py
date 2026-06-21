@@ -1,28 +1,26 @@
 import streamlit as st
 import math
 
-# Page setup
+# Page setup for a professional appearance
 st.set_page_config(page_title="Aircraft Sizing Estimator", page_icon="✈️", layout="centered")
 
 st.title("✈️ Custom Aircraft Configuration & Sizing Tool")
-st.write("Enter your passenger capacity requirements below to generate complete conceptual aircraft dimensions, subsystem specifications, and landing gear sizing.")
+st.write("Enter your passenger and crew requirements below to generate complete conceptual aircraft dimensions, subsystem specifications, and landing gear sizing.")
 
 st.markdown("---")
 
-# 1. THE ONLY CUSTOMER INPUT
+# 1. CUSTOMER INPUTS (Both inputs are now completely manual)
 st.subheader("Step 1: Enter Your Mission Requirements")
-num_passengers = st.number_input("Desired Number of Passengers", min_value=1, max_value=100, value=8, step=1)
 
-# 2. AUTOMATICALLY SCALE CREW & FUSELAGE (No hardcoded values)
-if num_passengers > 50:
-    num_crew = 5
-elif num_passengers > 19:
-    num_crew = 4
-else:
-    num_crew = 2
+col_input1, col_input2 = st.columns(2)
+with col_input1:
+    num_passengers = st.number_input("Desired Number of Passengers", min_value=1, max_value=100, value=8, step=1)
+with col_input2:
+    num_crew = st.number_input("Total Number of Crew (Pilots + Cabin Crew)", min_value=1, max_value=20, value=2, step=1)
 
-# Dynamically scale fuselage length: ~13 meters baseline for cockpit/tail + 1.2 meters per passenger pair
-fuselage_length = round(13.0 + (num_passengers * 0.6), 3)
+# 2. DYNAMICALLY SCALE FUSELAGE LENGTH
+# Scales dynamically: ~13 meters baseline for cockpit/tail structures + 0.6 meters per payload seat position
+fuselage_length = round(13.0 + ((num_passengers + num_crew) * 0.5), 3)
 
 # 3. INTERNAL AERODYNAMIC CONSTANTS
 v_stall_knots = 120
@@ -31,7 +29,7 @@ aspect_ratio = 8.7
 rho_sea_level = 1.225  
 g = 9.81
 
-# 4. BACKEND SIZING ENGINE (Calculations triggered by user input)
+# 4. BACKEND SIZING ENGINE (Calculations triggered by user inputs)
 # Mission weight fractions
 w1_w0 = 0.97    # Takeoff
 w2_w1 = 0.985   # Climb
@@ -44,7 +42,7 @@ mission_fuel_fraction = w1_w0 * w2_w1 * w3_w2 * w4_w3 * w5_w4 * w6_w5
 mission_fuel_weight_fraction = 1.06 * (1.0 - mission_fuel_fraction)
 empty_weight_fraction = 0.685
 
-# Component Mass Breakdowns (kg per person)
+# Component Mass Breakdowns (kg per person including baggage)
 passenger_weight = 90
 passenger_luggage = 23
 crew_weight = 90
@@ -70,7 +68,7 @@ root_chord = round((2 * wing_area) / (wing_span * (1 + 0.25)), 3)
 taper_ratio = 0.25
 mean_aerodynamic_chord = round((2/3) * root_chord * ((1 + taper_ratio + taper_ratio**2) / (1 + taper_ratio)), 3)
 
-# Tail Surface Area Sizing (Using the dynamic fuselage length!)
+# Tail Surface Area Sizing (Using the dynamic fuselage length)
 l_vt = 0.45 * fuselage_length
 l_ht = l_vt
 c_vt = 0.09
@@ -151,4 +149,4 @@ with tab3:
     st.write(f"• Mean Aerodynamic Chord (MAC): **{mean_aerodynamic_chord} m**")
     st.write(f"• Root Chord: **{root_chord} m**")
     st.write(f"• Assumed Aspect Ratio: **{aspect_ratio}**")
-    st.write(f"• Automatically Allocated Crew Count: **{num_crew} personnel**")
+    st.write(f"• Input Configurations: **{num_passengers} Passengers / {num_crew} Crew**")
